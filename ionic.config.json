@@ -1,5 +1,7 @@
 {
   "name": "cellar",
-  "integrations": {},
+  "integrations": {
+    "cordova": {}
+  },
   "type": "angular"
 }

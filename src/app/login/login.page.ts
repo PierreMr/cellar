@@ -1,5 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import * as firebase from "firebase";
+import { UserService } from "./../services/user.service";
+import { Storage } from "@ionic/storage";
 
 @Component({
   selector: "app-login",
@@ -7,7 +9,7 @@ import * as firebase from "firebase";
   styleUrls: ["./login.page.scss"],
 })
 export class LoginPage implements OnInit {
-  constructor() {}
+  constructor(private userSrvc: UserService, private storage: Storage) {}
 
   ngOnInit() {
     firebase.auth().languageCode = "fr";
@@ -19,12 +21,32 @@ export class LoginPage implements OnInit {
       .auth()
       .signInWithPopup(provider)
       .then((result) => {
-        console.log(result);
-        // This gives you a Google Access Token. You can use it to access the Google API.
-        // var token = result.credential.accessToken;
-        // The signed-in user info.
-        var user = result.user;
-        // ...
+        // let token = result.credential.accessToken;
+        // let userFB = result.user;
+
+        firebase
+          .firestore()
+          .collection("users")
+          .doc(result.user.uid)
+          .get()
+          .then((user) => {
+            this.storage.set("user", result.user);
+            if (user.exists) {
+              this.userSrvc.user = user;
+              this.userSrvc.userFB = result.user;
+            } else {
+              firebase
+                .firestore()
+                .collection("users")
+                .doc(result.user.uid)
+                .set({
+                  name: result.user.displayName,
+                  displayName: result.user.displayName,
+                  email: result.user.email,
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                });
+            }
+          });
       })
       .catch(function (error) {
         // Handle Errors here.
